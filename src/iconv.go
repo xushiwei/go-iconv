@@ -11,6 +11,7 @@ import (
 	"os"
 	"io"
 	"unsafe"
+	"bytes"
 )
 
 var EILSEQ = os.Errno(int(C.EILSEQ))
@@ -36,7 +37,7 @@ func OpenWith(tocode string, fromcode string, output io.Writer, bufSize int, aut
 	if err != nil {
 		return nil, err
 	}
-	if bufSize == 0 { bufSize = DefaultBufSize }
+	if bufSize < 16 { bufSize = DefaultBufSize }
 	var inbuf []byte
 	if !autoSync {
 		inbuf = make([]byte, bufSize)
@@ -126,6 +127,35 @@ func (cd *Iconv) WriteString(b string) (n int, err os.Error) {
 		b = b[n1:]
 	}
 	return n, nil
+}
+
+func (cd *Iconv) Conv(b []byte) (out []byte, err os.Error) {
+
+	inbytes := C.size_t(len(b))
+	inptr := &b[0]
+
+	outbuf := cd.outbuf
+	outbytes := C.size_t(len(outbuf))
+	outptr := &outbuf[0]
+	_, err = C.iconv(cd.pointer,
+		(**C.char)(unsafe.Pointer(&inptr)), &inbytes,
+		(**C.char)(unsafe.Pointer(&outptr)), &outbytes)
+
+	out = outbuf[:len(outbuf)-int(outbytes)]
+	if err == nil && err != E2BIG { return }
+
+	w := bytes.NewBuffer(nil)
+	w.Write(out)
+
+	n := int(inbytes)
+	_, err = iconv(cd.pointer, w, b[len(b)-n:], n, outbuf)
+	out = w.Bytes()
+	return
+}
+
+func (cd *Iconv) ConvString(s string) string {
+	s1, _ := cd.Conv([]byte(s))
+	return string(s1)
 }
 
 func iconv(cd C.iconv_t, w io.Writer, inbuf []byte, in int, outbuf []byte) (inleft int, err os.Error) {
