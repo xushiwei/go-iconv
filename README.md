@@ -19,7 +19,7 @@ make install
 
 ## Convert string
 
-```
+```go
 import (
     "fmt"
     "xushiwei.com/iconv"
@@ -42,7 +42,7 @@ func main() {
 
 ## Output to stdout
 
-```
+```go
 import (
     "fmt"
     "xushiwei.com/iconv"
@@ -63,7 +63,7 @@ func main() {
 
 ## Output to other output devices
 
-```
+```go
 import (
     "fmt"
     "xushiwei.com/iconv"
