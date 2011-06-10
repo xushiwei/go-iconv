@@ -24,21 +24,25 @@ type Iconv struct {
 	pointer C.iconv_t
 	output io.Writer
 	n int // inbuf[0:n] is valid
+	autoSync bool
 }
 
 func Open(tocode string, fromcode string) (*Iconv, os.Error) {
-	return OpenWith(tocode, fromcode, os.Stdout, 0)
+	return OpenWith(tocode, fromcode, os.Stdout, 0, true)
 }
 
-func OpenWith(tocode string, fromcode string, output io.Writer, bufSize int) (*Iconv, os.Error) {
+func OpenWith(tocode string, fromcode string, output io.Writer, bufSize int, autoSync bool) (*Iconv, os.Error) {
 	ret, err := C.iconv_open(C.CString(tocode), C.CString(fromcode))
 	if err != nil {
 		return nil, err
 	}
 	if bufSize == 0 { bufSize = DefaultBufSize }
-	inbuf := make([]byte, bufSize)
+	var inbuf []byte
+	if !autoSync {
+		inbuf = make([]byte, bufSize)
+	}
 	outbuf := make([]byte, bufSize)
-	return &Iconv{inbuf, outbuf, ret, output, 0}, nil
+	return &Iconv{inbuf, outbuf, ret, output, 0, autoSync}, nil
 }
 
 func (cd *Iconv) Close() os.Error {
@@ -51,6 +55,13 @@ func (cd *Iconv) Close() os.Error {
 func (cd *Iconv) Output(w io.Writer) {
 	cd.Sync()
 	cd.output = w
+}
+
+func (cd *Iconv) AutoSync(b bool) {
+	cd.autoSync = b
+	if b && cd.inbuf == nil {
+		cd.inbuf = make([]byte, len(cd.outbuf))
+	}
 }
 
 func (cd *Iconv) Sync() os.Error {
@@ -67,6 +78,12 @@ func (cd *Iconv) Sync() os.Error {
 
 func (cd *Iconv) Write(b []byte) (n int, err os.Error) {
 
+	if cd.autoSync {
+		var inleft int
+		inleft, err = iconv(cd.pointer, cd.output, b, len(b), cd.outbuf)
+		n = len(b) - inleft
+		return
+	}
 	for {
 		n1 := copy(cd.inbuf[cd.n:], b)
 		if n1 == 0 {
@@ -87,6 +104,12 @@ func (cd *Iconv) Write(b []byte) (n int, err os.Error) {
 
 func (cd *Iconv) WriteString(b string) (n int, err os.Error) {
 
+	if cd.autoSync {
+		var inleft int
+		inleft, err = iconv(cd.pointer, cd.output, []byte(b), len(b), cd.outbuf)
+		n = len(b) - inleft
+		return
+	}
 	for {
 		n1 := copy(cd.inbuf[cd.n:], b)
 		if n1 == 0 {
