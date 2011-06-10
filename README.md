@@ -2,7 +2,7 @@ go-iconv: libiconv for go
 
 # Summary
 
-go-iconv is a libiconv wrapper for go. libconv Convert string to requested character encoding.
+go-iconv is a libiconv wrapper for go. libiconv Convert string to requested character encoding.
 
 go-iconv project's homepage is: https://github.com/xushiwei/go-iconv
 
