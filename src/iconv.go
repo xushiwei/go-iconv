@@ -59,7 +59,7 @@ func (cd *Iconv) Output(w io.Writer) {
 
 func (cd *Iconv) AutoSync(b bool) {
 	cd.autoSync = b
-	if b && cd.inbuf == nil {
+	if !b && cd.inbuf == nil {
 		cd.inbuf = make([]byte, len(cd.outbuf))
 	}
 }
