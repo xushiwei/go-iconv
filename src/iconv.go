@@ -56,6 +56,7 @@ func (cd *Iconv) Close() os.Error {
 func (cd *Iconv) Output(w io.Writer) {
 	cd.Sync()
 	cd.output = w
+	cd.n = 0
 }
 
 func (cd *Iconv) AutoSync(b bool) {
