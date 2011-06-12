@@ -56,10 +56,10 @@ func (r *Reader) Read(b []byte) (n int, err os.Error) {
 		if r.from < r.to {
 			n1 := copy(b, r.rdbuf[r.from:r.to])
 			n += n1
+			r.from += n1
 			if n1 == len(b) {
 				break
 			}
-			r.from = r.to
 			b = b[n1:]
 		}
 		err = r.fetch()
