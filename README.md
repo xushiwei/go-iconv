@@ -21,69 +21,80 @@ make install
 
 ```go
 import (
-    "fmt"
-    "xushiwei.com/iconv"
+	"fmt"
+	"xushiwei.com/iconv"
 )
 
 func main() {
 
-    cd, err := iconv.Open("gbk", "utf-8")
-    if err != nil {
-        fmt.Println("iconv.Open failed!")
-        return
-    }
-    defer cd.Close()
+	cd, err := iconv.Open("gbk", "utf-8")
+	if err != nil {
+		fmt.Println("iconv.Open failed!")
+		return
+	}
+	defer cd.Close()
 
 	gbk := cd.ConvString("你好，世界！")
+
+	fmt.Println(gbk)
+}
+```
+
+## Output to io.Writer
+
+```go
+import (
+	"fmt"
+	"xushiwei.com/iconv"
+)
+
+func main() {
+
+	cd, err := iconv.Open("gbk", "utf-8")
+	if err != nil {
+		fmt.Println("iconv.Open failed!")
+		return
+	}
+	defer cd.Close()
+
+	output := ... // eg. output := os.Stdout || ouput, err := os.Create(file)
+	autoSync := false // buffered or not
+	bufSize := 0 // default if zero
+	w := iconv.NewWriter(cd, output, bufSize, autoSync)
+
+	fmt.Fprintln(w, "你好，世界！")
+
+	w.Sync() // if autoSync = false, you need call Sync() by yourself
+}
+```
+
+## Input from io.Reader
+
+```go
+import (
+	"fmt"
+	"io"
+	"os"
+	"xushiwei.com/iconv"
+)
+
+func main() {
+
+	cd, err := iconv.Open("utf-8", "gbk") // gbk => utf8
+	if err != nil {
+		fmt.Println("iconv.Open failed!")
+		return
+	}
+	defer cd.Close()
 	
-    fmt.Println(gbk)
-}
-```
-
-## Output to stdout
-
-```go
-import (
-    "fmt"
-    "xushiwei.com/iconv"
-)
-
-func main() {
-
-    cd, err := iconv.Open("gbk", "utf-8")
-    if err != nil {
-        fmt.Println("iconv.Open failed!")
-        return
-    }
-    defer cd.Close()
-
-    fmt.Fprintln(cd, "你好，世界！")
-}
-```
-
-## Output to other output devices
-
-```go
-import (
-    "fmt"
-    "xushiwei.com/iconv"
-)
-
-func main() {
-
-    output := ... // eg. output, err := os.Create(file)
-
-    autoSync := false // buffered or not
-    cd, err := iconv.OpenWith("gbk", "utf-8", output, 0, autoSync)
-    if err != nil {
-        fmt.Println("iconv.Open failed!")
-        return
-    }
-    defer cd.Close()
-
-    fmt.Fprintln(cd, "你好，世界！")
-
-    cd.Sync() // if autoSync = false, you need call Sync() by yourself
+	input := ... // eg. input := os.Stdin || input, err := os.Open(file)
+	r := iconv.NewReader(cd, , 0)
+	
+	_, err = io.Copy(os.Stdout, r)
+	if err != nil {
+		fmt.Println("\nio.Copy failed:", err)
+		return
+	}
 }
 ```
 
