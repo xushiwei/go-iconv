@@ -88,7 +88,8 @@ func main() {
 	defer cd.Close()
 	
 	input := ... // eg. input := os.Stdin || input, err := os.Open(file)
-	r := iconv.NewReader(cd, , 0)
+	bufSize := 0 // default if zero
+	r := iconv.NewReader(cd, input, bufSize)
 	
 	_, err = io.Copy(os.Stdout, r)
 	if err != nil {
