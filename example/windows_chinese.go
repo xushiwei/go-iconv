@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"xushiwei.com/iconv"
 )
 
@@ -12,6 +13,9 @@ func main() {
 		return
 	}
 	defer cd.Close()
-	fmt.Fprintln(cd, "你好，世界！")
+	
+	w := iconv.NewWriter(cd, os.Stdout, 0, true)
+	
+	fmt.Fprintln(w, "你好，世界！")
 }
 

@@ -1,0 +1,70 @@
+package iconv
+
+import (
+	"os"
+	"io"
+)
+
+type Reader struct {
+	rdbuf []byte
+	cnvbuf []byte
+	cd Iconv
+	input io.Reader
+	from, to int // rdbuf[from:to] is valid
+	m int // cnvbuf[:m] is valid
+	err os.Error
+}
+
+func NewReader(cd Iconv, input io.Reader, bufSize int) *Reader {
+	if bufSize < 16 { bufSize = DefaultBufSize }
+	rdbuf := make([]byte, bufSize)
+	cnvbuf := make([]byte, bufSize)
+	return &Reader{rdbuf, cnvbuf, cd, input, 0, 0, 0, nil}
+}
+
+func (r *Reader) Input(r1 io.Reader) {
+	r.input = r1
+	r.from, r.to, r.m = 0, 0, 0
+	r.err = nil
+}
+
+func (r *Reader) fetch() os.Error {
+
+	var m int
+
+	if r.err != nil { return r.err }
+
+	m, r.err = r.input.Read(r.cnvbuf[r.m:])
+	m += r.m
+	if m == 0 { return os.EOF }
+
+	r.from = 0
+	r.to, r.m, r.err = r.cd.Do(r.cnvbuf, m, r.rdbuf)
+	if r.err != EILSEQ {
+		r.err = nil
+	}
+	if r.m > 0 {
+		copy(r.cnvbuf[:r.m], r.cnvbuf[m-r.m:m])
+	}
+	if r.to == 0 { return os.EOF }
+	return nil
+}
+
+func (r *Reader) Read(b []byte) (n int, err os.Error) {
+
+	for {
+		if r.from < r.to {
+			n1 := copy(b, r.rdbuf[r.from:r.to])
+			n += n1
+			if n1 == len(b) {
+				break
+			}
+			r.from = r.to
+			b = b[n1:]
+		}
+		err = r.fetch()
+		if err != nil { break }
+	}
+	return
+}
+
