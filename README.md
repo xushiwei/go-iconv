@@ -10,7 +10,7 @@ go-iconv project's homepage is: https://github.com/xushiwei/go-iconv
 # Install
 
 ```
-git clone git@github.com:xushiwei/go-iconv.git
+git clone git://github.com/xushiwei/go-iconv.git
 cd go-iconv
 make install
 ```
