@@ -1,7 +1,6 @@
 package iconv
 
 import (
-	"os"
 	"io"
 )
 
@@ -12,7 +11,7 @@ type Reader struct {
 	input io.Reader
 	from, to int // rdbuf[from:to] is valid
 	m int // cnvbuf[:m] is valid
-	err os.Error
+	err error
 }
 
 func NewReader(cd Iconv, input io.Reader, bufSize int) *Reader {
@@ -28,7 +27,7 @@ func (r *Reader) Input(r1 io.Reader) {
 	r.err = nil
 }
 
-func (r *Reader) fetch() os.Error {
+func (r *Reader) fetch() error {
 
 	var m int
 
@@ -36,7 +35,7 @@ func (r *Reader) fetch() os.Error {
 
 	m, r.err = r.input.Read(r.cnvbuf[r.m:])
 	m += r.m
-	if m == 0 { return os.EOF }
+	if m == 0 { return io.EOF }
 
 	r.from = 0
 	r.to, r.m, r.err = r.cd.Do(r.cnvbuf, m, r.rdbuf)
@@ -46,11 +45,11 @@ func (r *Reader) fetch() os.Error {
 	if r.m > 0 {
 		copy(r.cnvbuf[:r.m], r.cnvbuf[m-r.m:m])
 	}
-	if r.to == 0 { return os.EOF }
+	if r.to == 0 { return io.EOF }
 	return nil
 }
 
-func (r *Reader) Read(b []byte) (n int, err os.Error) {
+func (r *Reader) Read(b []byte) (n int, err error) {
 
 	for {
 		if r.from < r.to {

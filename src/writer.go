@@ -37,7 +37,7 @@ func (w *Writer) AutoSync(b bool) {
 	}
 }
 
-func (w *Writer) Sync() os.Error {
+func (w *Writer) Sync() error {
 
 	if w.n == 0 { return nil }
 	
@@ -49,7 +49,7 @@ func (w *Writer) Sync() os.Error {
 	return err
 }
 
-func (w *Writer) Write(b []byte) (n int, err os.Error) {
+func (w *Writer) Write(b []byte) (n int, err error) {
 
 	if w.autoSync {
 		var inleft int
@@ -75,7 +75,7 @@ func (w *Writer) Write(b []byte) (n int, err os.Error) {
 	return n, nil
 }
 
-func (w *Writer) WriteString(b string) (n int, err os.Error) {
+func (w *Writer) WriteString(b string) (n int, err error) {
 
 	if w.autoSync {
 		var inleft int

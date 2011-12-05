@@ -8,14 +8,14 @@ package iconv
 import "C"
 
 import (
-	"os"
 	"io"
 	"unsafe"
 	"bytes"
+	"syscall"
 )
 
-var EILSEQ = os.Errno(int(C.EILSEQ))
-var E2BIG = os.Errno(int(C.E2BIG))
+var EILSEQ = syscall.Errno(C.EILSEQ)
+var E2BIG = syscall.Errno(C.E2BIG)
 
 const DefaultBufSize = 4096
 
@@ -23,7 +23,7 @@ type Iconv struct {
 	Handle C.iconv_t
 }
 
-func Open(tocode string, fromcode string) (cd Iconv, err os.Error) {
+func Open(tocode string, fromcode string) (cd Iconv, err error) {
 	ret, err := C.iconv_open(C.CString(tocode), C.CString(fromcode))
 	if err != nil {
 		return
@@ -32,12 +32,12 @@ func Open(tocode string, fromcode string) (cd Iconv, err os.Error) {
 	return
 }
 
-func (cd Iconv) Close() os.Error {
+func (cd Iconv) Close() error {
 	_, err := C.iconv_close(cd.Handle)
 	return err
 }
 
-func (cd Iconv) Conv(b []byte, outbuf []byte) (out []byte, inleft int, err os.Error) {
+func (cd Iconv) Conv(b []byte, outbuf []byte) (out []byte, inleft int, err error) {
 
 	outn, inleft, err := cd.Do(b, len(b), outbuf)	
 	if err == nil && err != E2BIG {
@@ -59,7 +59,7 @@ func (cd Iconv) ConvString(s string) string {
 	return string(s1)
 }
 
-func (cd Iconv) Do(inbuf []byte, in int, outbuf []byte) (out, inleft int, err os.Error) {
+func (cd Iconv) Do(inbuf []byte, in int, outbuf []byte) (out, inleft int, err error) {
 
 	if in == 0 { return }
 	
@@ -77,7 +77,7 @@ func (cd Iconv) Do(inbuf []byte, in int, outbuf []byte) (out, inleft int, err os
 	return
 }
 
-func (cd Iconv) DoWrite(w io.Writer, inbuf []byte, in int, outbuf []byte) (inleft int, err os.Error) {
+func (cd Iconv) DoWrite(w io.Writer, inbuf []byte, in int, outbuf []byte) (inleft int, err error) {
 
 	if in == 0 { return }
 
